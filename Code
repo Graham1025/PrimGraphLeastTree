@@ -1,0 +1,143 @@
+#include<stdio.h>
+#include<stdlib.h>
+#define MAX_VERTEX_NUM 20
+
+typedef char VertexType;
+typedef enum { UDG, DG } GraphType;
+typedef struct
+{
+	VertexType Vertex[MAX_VERTEX_NUM];
+	int arcs[MAX_VERTEX_NUM][MAX_VERTEX_NUM];
+	GraphType Mtype;
+	int arcnum, vernum;    //图当前的定点数和弧（或边）数
+}MGraph;
+
+typedef struct
+{
+	int start;
+	int end;
+	int weight;
+}Assist_array;
+
+void CreateMGraph(MGraph *MG)
+{
+	int i, j, k, m, row = 0, line = 0, weight = 0;
+	VertexType c, tail, top;
+	printf("请输入图的类型1（有向图），0为无向图：");
+	scanf("%d", &MG->Mtype);
+	printf("\n请输入顶点数：");
+	scanf("%d", &MG->vernum);
+	printf("\n请输入边数：");
+	scanf("%d", &MG->arcnum);
+	getchar();
+	//初始化邻接矩阵
+	for (i = 0; i < MG->vernum; i++)
+		for (j = 0; j < MG->vernum; j++)
+			MG->arcs[i][j] = 0;
+	//初始化顶点数组
+	printf("\n请输入顶点元素：");
+	scanf("%c", &c);
+	for (k = 0; k < MG->vernum; k++)
+	{
+		MG->Vertex[k] = c;
+		scanf("%c", &c);
+	}
+	//getchar();
+	//输入图的边
+	for (m = 0; m < MG->arcnum; m++)
+	{
+		printf("\n请输入第%dth条边及对应的权值：", m + 1);
+		scanf("%c", &tail);
+		scanf("%c", &top);
+		scanf("%d", &weight);
+		//根据边写入对应邻接矩阵
+		for (i = 0; i < MG->vernum; i++)
+		{
+			if (MG->Vertex[i] == tail)
+			{
+				row = i;
+				break;
+			}
+		}
+		for (j = 0; j < MG->vernum; j++)
+		{
+			if (MG->Vertex[j] == top)
+			{
+				line = j;
+				break;
+			}
+		}
+		if (row != line)
+			MG->arcs[row][line] = MG->arcs[line][row] = weight;    //无向图邻接矩阵沿对角线对称
+		else
+			printf("\n输入第%dth条边出错，请重试", m);
+		getchar();
+	}
+
+}
+
+void printMG(MGraph MG)
+{
+	int i, j;
+	for (i = 0; i < MG.vernum; i++)
+	{
+		printf("\n");
+		for (j = 0; j < MG.vernum; j++)
+			printf("%d ", MG.arcs[i][j]);
+	}
+	printf("\n\n");
+}
+
+void PrimLeastTree(MGraph MG)
+{
+	int i, j, m, V[MAX_VERTEX_NUM], U[MAX_VERTEX_NUM] = { 0 };
+	//把V顶点集合的值都赋值为1
+	for (i = 0; i < MAX_VERTEX_NUM; i++)
+		V[i] = 1;
+	//选择prim算法最初的点，并定义k选定的上一个点，Sweight为最小生成树权值的和
+	U[0] = 1; V[0] = 0;
+	int k = 0, Sweight = 0;
+	Assist_array leastedge = { 0 };
+	for (i = 1; i < MG.vernum; i++)
+	{
+		for (m = 0; m < MG.vernum; m++)
+		{
+			if (U[m] == 1)
+			{
+				k = m;
+				for (j = 0; j < MG.vernum; j++)
+				{
+					//weight为0时
+					if (leastedge.weight == 0 && MG.arcs[k][j] > 0 && U[j] == 0 && V[j] == 1)
+					{
+						leastedge.start = k;
+						leastedge.end = j;
+						leastedge.weight = MG.arcs[k][j];
+					}
+					//weight不为0时，判断是否是权值最小边
+					else if (MG.arcs[k][j] > 0 && MG.arcs[k][j] < leastedge.weight && U[j] == 0 && V[j] == 1)
+					{
+						leastedge.start = k;
+						leastedge.end = j;
+						leastedge.weight = MG.arcs[k][j];
+					}
+				}
+			}
+		}
+		Sweight += leastedge.weight;
+		U[leastedge.end] = 1; V[leastedge.end] = 0;
+		printf("第%d条边为%c%c，对应权值为%d\n", i, MG.Vertex[leastedge.start], MG.Vertex[leastedge.end], leastedge.weight);
+		//leastedge数组值清零
+		leastedge.start = 0; leastedge.end = 0; leastedge.weight = 0;
+	}
+	printf("\n最小生成树的权值和为%d\n", Sweight);
+}
+
+int main()
+{
+	MGraph MG;
+	CreateMGraph(&MG);
+	printMG(MG);
+	PrimLeastTree(MG);
+	getchar();
+}
